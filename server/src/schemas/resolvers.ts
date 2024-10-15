@@ -1,4 +1,4 @@
-import User, { UserDocument } from '../models/User.js';
+import User from '../models/User.js';
 import { signToken, AuthenticationError } from '../services/auth.js';
 
 interface LoginUserArgs {
@@ -16,19 +16,28 @@ interface RemoveBookArgs {
     bookId: string;
 }
 
-
+interface AddUserArgs {
+    input:{
+        username: string;
+        email: string;
+        password: string;
+    }
+}
 
 const resolvers = {
   Query: {
-    user: async(_parent: any, { username }: UserDocument) => {
-        return User.findOne({ username })
-    }
-    
+    me: async (_parent: any, _args: any, context: any) => {
+        if (context.user) {
+          return User.findOne({ _id: context.user._id });
+        }
+        throw new AuthenticationError('Could not authenticate user.');
+    },
   },
   Mutation: {
-    createUser: async (_parent: any, args: any) : Promise<UserDocument | null> => {
-        const user = await User.create(args);
-        return user;
+    createUser: async (_parent: any, { input } : AddUserArgs) => {
+        const user = await User.create({ ... input });
+        const token = signToken(user.username, user.email, user._id);
+        return { token, user };
     },
 
     login: async (_parent: any, { email, password } : LoginUserArgs) => {
@@ -72,7 +81,6 @@ const resolvers = {
         }
         throw AuthenticationError;
     }
-    // saveBook
   },
 };
 
