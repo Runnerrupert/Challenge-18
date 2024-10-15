@@ -6,6 +6,10 @@ interface LoginUserArgs {
     password: string;
 }
 
+interface UserArgs {
+    username: string;
+}
+
 interface AddBookArgs {
     userId: string;
     bookId: string;
@@ -26,6 +30,10 @@ interface AddUserArgs {
 
 const resolvers = {
   Query: {
+    user: async (_parent: any, { username }: UserArgs) => {
+        return User.findOne({ username });
+    },
+    
     me: async (_parent: any, _args: any, context: any) => {
         if (context.user) {
           return User.findOne({ _id: context.user._id });
