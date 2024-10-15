@@ -9,7 +9,11 @@ import { authenticateToken } from './services/auth.js';
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
+  formatError: (err) => {
+    console.error(err);
+    return err;
+  }
 });
 
 const startApolloServer = async () => {

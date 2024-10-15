@@ -30,8 +30,20 @@ export const QUERY_ME = gql`
                 authors
                 description
                 image
-                link
             }
+        }
+    }
+`;
+
+export const SEARCH_BOOK = gql`
+    query searchBooks($input: String!) {
+        searchBooks(input: $input) {
+            bookId
+            authors
+            title
+            description
+            image
+            link
         }
     }
 `;

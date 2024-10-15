@@ -10,6 +10,12 @@ interface UserArgs {
     username: string;
 }
 
+interface SearchBookArgs {
+    input:{
+        query: string;
+    }
+}
+
 interface AddBookArgs {
     userId: string;
     bookId: string;
@@ -28,8 +34,41 @@ interface AddUserArgs {
     }
 }
 
+interface GoogleAPIVolumeInfo {
+    title: string;
+    authors: string[];
+    description: string;
+    imageLinks: {
+      smallThumbnail: string;
+      thumbnail: string;
+    };
+} 
+
+interface GoogleAPIBook {
+    id: string;
+    volumeInfo: GoogleAPIVolumeInfo;
+}
+
 const resolvers = {
   Query: {
+    searchBooks: async(_parent: any, { input } : SearchBookArgs) => {
+        
+        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${input}`);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch book');
+        }
+        const data = await response.json();
+
+        return data.items.map((book: GoogleAPIBook) => ({
+            bookId: book.id,
+            authors: book.volumeInfo.authors || ['No author to display'],
+            title: book.volumeInfo.title,
+            description: book.volumeInfo.description,
+            image: book.volumeInfo.imageLinks?.thumbnail || '',
+        }));
+    },
+
     user: async (_parent: any, { username }: UserArgs) => {
         return User.findOne({ username });
     },
@@ -43,9 +82,15 @@ const resolvers = {
   },
   Mutation: {
     createUser: async (_parent: any, { input } : AddUserArgs) => {
-        const user = await User.create({ ... input });
-        const token = signToken(user.username, user.email, user._id);
-        return { token, user };
+        console.log("Recieved input for createUser:", input);
+        try {
+            const user = await User.create({ ...input });
+            const token = signToken(user.username, user.email, user._id);
+            return { token, user };
+        } catch (error) {
+            console.error("Error creating user:", error);
+            throw new Error("Failed to create user");
+        }
     },
 
     login: async (_parent: any, { email, password } : LoginUserArgs) => {

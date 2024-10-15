@@ -28,6 +28,7 @@ const typeDefs = `
  }
 
  type Query {
+  searchBooks(input: String!): [Book]
   user(username: String!): User
   me: User
  }
