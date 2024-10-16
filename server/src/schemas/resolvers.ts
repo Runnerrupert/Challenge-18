@@ -17,12 +17,17 @@ interface SearchBookArgs {
 }
 
 interface AddBookArgs {
-    userId: string;
-    bookId: string;
+    book: {
+        bookId: string;
+        title: string;
+        authors: string[];
+        description: string;
+        image: string;
+        link: string;
+    };
 }
 
 interface RemoveBookArgs {
-    userId: string;
     bookId: string;
 }
 
@@ -105,34 +110,33 @@ const resolvers = {
             throw new AuthenticationError('Could not authenticate user.');
         }
         const token = signToken(user.username, user.email, user._id);
-
         return { token, user };
     },
 
-    saveBook: async (_parent: any, { userId, bookId }: AddBookArgs , context: any) => {
+    saveBook: async (_parent: any, { book }: AddBookArgs , context: any) => {
         if (context.user) {
             return User.findOneAndUpdate(
-                { _id: userId },
-                { $addToSet: { savedBooks: bookId}},
+                { _id: context.user._id },
+                { $addToSet: { savedBooks: book}},
                 { new: true, runValidators: true }
             );
         }
-        throw AuthenticationError;
+        throw new AuthenticationError('You need to be logged in!');
     },
 
-    deleteBook: async (_parent: any, { userId, bookId }: RemoveBookArgs, context: any) => {
+    deleteBook: async (_parent: any, { bookId }: RemoveBookArgs, context: any) => {
         if (context.user) {
             return User.findOneAndUpdate(
-                { _id: userId },
+                { _id: context.user._id },
                 {
                     $pull: {
-                        savedBooks: { id: bookId }
+                        savedBooks: { bookId }
                     },
                 },
                 { new: true }
             );
         }
-        throw AuthenticationError;
+        throw new AuthenticationError('You need to be logged in!');
     }
   },
 };

@@ -29,7 +29,10 @@ const SearchBooks = () => {
   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
   useEffect(() => {
-    return () => saveBookIds(savedBookIds);
+    return () => {
+      console.log("Saving to Local Storage:", savedBookIds);
+      saveBookIds(savedBookIds);
+    }
   });
 
   const { refetch } = useQuery(SEARCH_BOOK, {
@@ -42,6 +45,7 @@ const SearchBooks = () => {
 
   const [ saveBook ] = useMutation(SAVE_BOOK, {
     onCompleted: (data) => {
+      console.log("Save Book Response:", data);
       setSavedBookIds([...savedBookIds, data.saveBook.bookId]);
     },
   });
@@ -67,15 +71,19 @@ const SearchBooks = () => {
     // if (!token) {
     //   return false;
     // }
+    console.log("Book Being Saved: ", bookToSave.bookId)
 
     try {
       await saveBook({
         variables: {
-          bookId: bookToSave.bookId,
-          title: bookToSave.title,
-          authors: bookToSave.authors,
-          description: bookToSave.description,
-          image: bookToSave.image,
+          book: {
+            bookId: bookToSave.bookId,
+            title: bookToSave.title,
+            authors: bookToSave.authors,
+            description: bookToSave.description,
+            image: bookToSave.image,
+            link: bookToSave.link
+          }
         },
       });
     } catch (err) {
