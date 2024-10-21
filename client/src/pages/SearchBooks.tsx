@@ -11,7 +11,7 @@ import {
 
 import Auth from '../utils/auth';
 // import { saveBook, searchGoogleBooks } from '../utils/API';
-import { useQuery, useMutation } from '@apollo/client';
+import { useLazyQuery, useMutation } from '@apollo/client';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import type { Book } from '../models/Book';
 import { SEARCH_BOOK } from '../utils/queries';
@@ -30,14 +30,11 @@ const SearchBooks = () => {
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
   useEffect(() => {
     return () => {
-      console.log("Saving to Local Storage:", savedBookIds);
       saveBookIds(savedBookIds);
     }
   });
 
-  const { refetch } = useQuery(SEARCH_BOOK, {
-    variables: { input: searchInput },
-    skip: !searchInput,
+  const [ searchBooks ] = useLazyQuery(SEARCH_BOOK, {
     onCompleted: (data) => {
       setSearchedBooks(data.searchBooks);
     },
@@ -45,9 +42,11 @@ const SearchBooks = () => {
 
   const [ saveBook ] = useMutation(SAVE_BOOK, {
     onCompleted: (data) => {
-      console.log("Save Book Response:", data);
-      setSavedBookIds([...savedBookIds, data.saveBook.bookId]);
+      setSavedBookIds([...savedBookIds, data.saveBook.savedBooks[data.saveBook.savedBooks.length-1].bookId]);
     },
+    onError: (err) => {
+      console.error("Failed to save the book", err);
+    }
   });
 
   // create method to search for books and set state on form submit
@@ -57,7 +56,7 @@ const SearchBooks = () => {
     if (!searchInput) {
       return false;
     }
-    await refetch({ input: searchInput });
+    await searchBooks({ variables: { input: searchInput} });
     setSearchInput('');
   };
 
@@ -65,13 +64,6 @@ const SearchBooks = () => {
   const handleSaveBook = async (bookId: string) => {
     // find the book in `searchedBooks` state by the matching id
     const bookToSave: Book = searchedBooks.find((book) => book.bookId === bookId)!;
-    // // get token
-    // const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-    // if (!token) {
-    //   return false;
-    // }
-    console.log("Book Being Saved: ", bookToSave.bookId)
 
     try {
       await saveBook({
