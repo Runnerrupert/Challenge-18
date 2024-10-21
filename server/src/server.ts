@@ -24,7 +24,7 @@ const startApolloServer = async () => {
   await server.start();
   await db();
 
-  const PORT = process.env.PORT || 3001;
+  const PORT: number = Number(process.env.PORT) || 3001;
   const app = express();
 
   app.use(express.urlencoded({ extended: false }));
@@ -44,7 +44,7 @@ const startApolloServer = async () => {
     });
   }
 
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`API server running on port ${PORT}!`);
     console.log(`Use GraphQL at http://localhost:${PORT}/graphql`);
   });
